@@ -91,7 +91,7 @@ def main():
                                                       where_filter=guest_filter)
             # rerank results
             ranked_response = reranker.rerank(hybrid_response, query, apply_sigmoid=True, top_k=3)
-            filtered_ranked_response = [resp for resp in ranked_response if resp["cross_score"] >= 0.8]
+            filtered_ranked_response = [resp for resp in ranked_response if resp["cross_score"] >= 0]
             # validate token count is below threshold
 
             if len(filtered_ranked_response) > 0:
@@ -120,23 +120,26 @@ def main():
                     #                  # START CODE #
                     #                  ##############
                     #
+                    try:
+                        for response in llm.get_chat_completion(prompt=prompt,
+                                                                stream=True,
+                                                                max_tokens=350,
+                                                                show_response=True):
 
-                    response = llm.get_chat_completion(prompt=prompt,
-                                                       stream=False,
-                                                       show_response=False)
+                            # inserts chat stream from LLM
+                            with response_box:
+                                content = response.choices[0].delta.content
+                                if content:
+                                    chat_container.append(content)
+                                    result = "".join(chat_container).strip()
+                                    st.write(f'{result}')
+                    except Exception as e:
+                        print(e)
+
                     #                  ##############
                     #                  #  END CODE  #
                     #                  ##############
-                    try:
-                        # inserts chat stream from LLM
-                        with response_box:
-                            content = response.choices[0].delta.content
-                            if content:
-                                chat_container.append(content)
-                                result = "".join(chat_container).strip()
-                                st.write(f'{result}')
-                    except Exception as e:
-                        print(e)
+
 
                 # ##############
                 # # START CODE #
